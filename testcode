@@ -1,1 +1,230 @@
 test.py
+assert_def.py
+def assert_equal(actual,expected,case_name):
+    if actual==expected:
+        print(f"{case_name}通过")
+        return True
+    else:
+        print(f"{case_name}失败:预期{expected},实际{actual}")
+        return False
+assert_equal(200, 200, "状态码校验")
+assert_equal("success", "fail", "登录结果校验")
+assert_equal(3.14, 3.14, "浮点数校验")
+def build_request(url,method="GET",timeout=10):
+    dict={"url":url,"method":method,"timeout":timeout}
+    return dict
+# 只传必填参数
+print(build_request("https://api.test.com/login"))
+
+# 覆盖默认值
+print(build_request("https://api.test.com/login", method="POST", timeout=30))
+
+# 用关键字参数调换顺序
+print(build_request(timeout=5, url="https://api.test.com/data"))
+auto_pytest.py
+import pytest
+@pytest.fixture
+def temp_file():
+    with open("temp_file.text","w")as f:
+        f.write("test data")
+    print("\n [测试前]临时文件已创建")
+    yield
+    import os
+    os.remove("temp_file.text")
+    print("[测试后]临时文件已删除")
+def test_read_temp_file(temp_file):
+    with open("temp_file.text","r")as f:
+        content=f.read()
+        assert content=="test data"
+cycle.py
+for i in range(1,21):
+    print(f"TC-{i:03d}")
+read_json.py
+import json
+def do_login(username,password):
+    if username=='admin' and password=="123":
+        return "login successful"
+    elif username!="admin":
+        return "username is wrong"
+    else:
+        return "password is wrong"
+def run_login_test_from_file(filename):
+    passed_cases=0
+    failed_cases=0
+    with open(filename,"r",encoding='utf-8') as f:
+        data=json.load(f)
+    for case in data:
+        result=do_login(case['username'],case['password'])
+        print(f"用例编号:{case['case_id']},结果:{result},预期结果:{case['expected']}")
+        if result==case['expected']:
+            passed_cases+=1
+        else:
+            failed_cases+=1
+    return passed_cases,failed_cases
+passed_cases,failed_cases=run_login_test_from_file("test_data.json")
+print("====统计====")
+print(f"通过:{passed_cases},失败:{failed_cases}")
+try_except.py
+import json
+def do_login(username,password):
+    if username=='admin' and password=="123":
+        return "login successful"
+    elif username!="admin":
+        return "username is wrong"
+    else:
+        return "password is wrong"
+def run_login_test_from_file(filename):
+    passed_cases=0
+    failed_cases=0
+    try:
+        with open(filename,"r",encoding='utf-8') as f:
+            data=json.load(f)
+    except FileNotFoundError:
+        print("测试文件不存在,请检查路径")
+        return (0,0)
+    except json.JSONDecodeError:
+        print("测试数据文件格式错误,请检查json格式")
+        return (0,0)
+    for case in data:
+        result=do_login(case['username'],case['password'])
+        try:
+            print(f"用例编号:{case['case_id']},结果:{result},预期结果:{case['expected']}")
+        except KeyError:
+            print("用例数据缺少必要字段,跳过该用例")
+            failed_cases+=1
+            continue
+        if result==case['expected']:
+            passed_cases+=1
+        else:
+            failed_cases+=1
+    return passed_cases,failed_cases
+passed_cases,failed_cases=run_login_test_from_file("test_data.json")
+print("====统计====")
+print(f"通过:{passed_cases},失败:{failed_cases}")
+test_runner.py
+import json
+def do_login(username,password):
+    if username=='admin' and password=="123":
+        return "login successful"
+    elif username!="admin":
+        return "username is wrong"
+    else:
+        return "password is wrong"
+test_result=[]
+def safe_run_tests(filename):
+    passed_cases=0
+    failed_cases=0
+    try:
+        with open(filename,"r",encoding='utf-8') as f:
+            data=json.load(f)
+    except FileNotFoundError:
+        print("测试文件不存在,请检查路径")
+        return (0,0)
+    except json.JSONDecodeError:
+        print("测试数据文件格式错误,请检查json格式")
+        return (0,0)
+    for case in data:
+        result=do_login(case['username'],case['password'])
+        
+        try:
+            print(f"用例编号:{case['case_id']},结果:{result},预期结果:{case['expected']}")
+        except KeyError:
+            print("用例数据缺少必要字段,跳过该用例")
+            failed_cases+=1
+            continue
+        if result==case['expected']:
+            passed_cases+=1
+            status="pass"
+        else:
+            failed_cases+=1
+            status="fail"
+        test_result.append({"case_id":case['case_id'],"result":status,"actual":result})
+    with open("test_result.json", "w", encoding="utf-8") as f:
+        json.dump(test_result, f, ensure_ascii=False, indent=4)
+    return passed_cases,failed_cases
+passed_cases,failed_cases=safe_run_tests("test_data.json")
+print("====统计====")
+print(f"通过:{passed_cases},失败:{failed_cases}") 
+dict in list.py
+test_data = [
+    {"case_id": "TC-001", "username": "admin", "password": "123", "expected": "login successful"},
+    {"case_id": "TC-002", "username": "root", "password": "123", "expected": "username is wrong"},
+    {"case_id": "TC-003", "username": "admin", "password": "456", "expected": "password is wrong"},
+    {"case_id": "TC-004", "username": "", "password": "123", "expected": "username is empty"},
+]
+expected=0
+for case in test_data:
+    print(f"case_id:{case['case_id']},username:{case['username']}")
+    if case["expected"]=="login successful":
+        expected+=1
+test_data.append({"case_id":"TC-005","username":"admin","password":"123","expected":"login successful"})
+for case in test_data:
+    if case["username"]=="admin":
+        print(f"case_id:{case['case_id']}")
+dict.py
+request_body={"username":"admin","password":"123456","remember":True}
+print(f"username is :{request_body['username']}")
+print(f"email is :{request_body.get('email')}")
+request_body["password"]="new_password"
+request_body["login_type"]="normal"
+print(f"request_body:{request_body}")
+request_body.pop("remember")
+keys=request_body.keys()
+for key,value in request_body.items():
+    print(f"{key}:{value}")
+list.py
+test_cases=["TC-001","TC-002","TC-003","TC-004","TC-005"]
+test_cases.append("TC-006")
+print(f"test_cases:{test_cases}")
+test_cases.insert(0,"TC-000")
+print(f"test_cases:{test_cases}")
+test_cases.remove("TC-003")
+print(f"test_cases:{test_cases}")
+print(f"前三条用例:{test_cases[:3]}")
+print(f"列表长度：{len(test_cases)}")
+for test_case in test_cases:
+    print(test_case)
+practice.py
+def do_login(username,password):
+    if username=='admin' and password=="123":
+        return "login successful"
+    elif username!="admin":
+        return "username is wrong"
+    else:
+        return "password is wrong"
+def run_login_test(test_data):
+    passed_cases=0
+    failed_cases=0
+    for data in test_data:
+        result=do_login(data['username'],data['password'])
+        print(f"result:{result}")
+        if result==data['expected']:
+            passed_cases+=1
+        else:
+            failed_cases+=1
+    return passed_cases,failed_cases
+test_data = [
+    {"case_id": "TC-001", "username": "admin", "password": "123", "expected": "login successful"},
+    {"case_id": "TC-002", "username": "root", "password": "123", "expected": "username is wrong"},
+    {"case_id": "TC-003", "username": "admin", "password": "456", "expected": "password is wrong"},
+    {"case_id": "TC-004", "username": "test", "password": "000", "expected": "username is wrong"},
+]
+passed_cases, failed_cases = run_login_test(test_data)
+print("====统计====")
+print(f"通过:{passed_cases},失败:{failed_cases}")
+test_pytest_fixture.py
+import pytest
+def do_login(username,password):
+    if username=='admin' and password=="123":
+        return "login successful"
+    elif username!="admin":
+        return "username is wrong"
+    else:
+        return "password is wrong"
+@pytest.fixture
+def vaild_user():
+    """返回一个合法用户的测试数据"""
+    return {"username": "admin", "password": "123", "expected": "login successful"}
+def test_login_vaild(vaild_user):
+    result=do_login(vaild_user['username'],vaild_user['password'])
+    assert result==vaild_user['expected']
